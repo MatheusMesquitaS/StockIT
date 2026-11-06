@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="topbar">
+    <div>
+        <h1>{{ tr('inventory') }}</h1>
+        <p>{{ tr('inventory_subtitle') }}</p>
+    </div>
+    <a href="{{ url_for('novo_produto') }}" class="btn primary">{{ tr('new_item') }}</a>
+</div>
+
+<div class="panel filter-panel">
+    <form class="filter-form filter-form-products" method="GET" autocomplete="off">
+        <input name="busca" value="{{ busca }}" placeholder="{{ tr('search_product_placeholder') }}">
+        <select name="tipo" aria-label="{{ tr('filter_item_type') }}">
+            <option value="">{{ tr('all_types') }}</option>
+            {% for t in tipos %}
+            <option value="{{ t }}" {% if tipo_filtro == t %}selected{% endif %}>{{ t }}</option>
+            {% endfor %}
+        </select>
+        <button class="btn primary" type="submit">{{ tr('search') }}</button>
+        <a class="btn light" href="{{ url_for('produtos') }}">{{ tr('clear') }}</a>
+    </form>
+</div>
+
+<div class="filter-result-count">
+    <strong>{{ produtos|length }}</strong> {{ tr('items_found') }}
+    {% if tipo_filtro %}{{ tr('of_type') }} <strong>{{ tipo_filtro }}</strong>{% endif %}
+</div>
+
+<div class="panel">
+    <div class="panel-body table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>{{ tr('item') }}</th>
+                    <th>{{ tr('type') }}</th>
+                    <th>{{ tr('asset') }}</th>
+                    <th>{{ tr('serial') }}</th>
+                    <th>{{ tr('plant') }}</th>
+                    <th>{{ tr('quantity') }}</th>
+                    <th>{{ tr('status') }}</th>
+                    <th>{{ tr('actions') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i in produtos %}
+                <tr>
+                    <td>
+                        {{ i['nome'] }}
+                        {% if i['tipo'] == 'Toner' and i['cor_toner'] %}
+                        <small class="toner-chip toner-{{ i['cor_toner']|lower }}">{{ i['cor_toner'] }}</small>
+                        {% endif %}
+                        {% if i['tipo'] in ['Notebook', 'Desktop'] %}
+                            {% set partes = [] %}
+                            {% if i['processador'] %}{% set _ = partes.append(i['processador']) %}{% endif %}
+                            {% if i['ram_gb'] %}
+                                {% set ram = i['ram_gb'] ~ 'GB' %}
+                                {% if i['ram_canal'] %}{% set ram = ram ~ ' ' ~ tr('ram_' ~ i['ram_canal']) %}{% endif %}
+                                {% set _ = partes.append(ram) %}
+                            {% endif %}
+                            {% if i['armazenamento_gb'] %}
+                                {% set disco = i['armazenamento_gb'] ~ 'GB' %}
+                                {% if i['armazenamento_tipo'] %}{% set disco = tr('storage_' ~ i['armazenamento_tipo']) ~ ' ' ~ disco %}{% endif %}
+                                {% set _ = partes.append(disco) %}
+                            {% endif %}
+                            {% if partes %}
+                            <small class="spec-summary">{{ partes|join(' • ') }}</small>
+                            {% endif %}
+                            {% if i['tipo'] == 'Notebook' and (i['bateria_saude'] is not none or i['bateria_status']) %}
+                            <small class="battery-chip battery-{{ i['bateria_status'] or 'none' }}">
+                                {{ tr('battery') }}:
+                                {% if i['bateria_saude'] is not none %}{{ i['bateria_saude'] }}%{% endif %}
+                                {% if i['bateria_status'] %}· {{ tr('battery_' ~ i['bateria_status']) }}{% endif %}
+                            </small>
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                    <td>{{ i['tipo'] }}</td>
+                    <td>{{ i['patrimonio'] or '-' }}</td>
+                    <td>{{ i['serial'] or '-' }}</td>
+                    <td>{{ i['planta'] }}</td>
+                    <td>{{ i['quantidade'] }}</td>
+                    <td>
+                        {% if i['quantidade'] <= 0 %}
+                        <span class="badge red">{{ tr('out_of_stock') }}</span>
+                        {% elif i['quantidade'] <= i['estoque_minimo'] %}
+                        <span class="badge yellow">{{ tr('low_stock') }}</span>
+                        {% else %}
+                        <span class="badge green">OK</span>
+                        {% endif %}
+                    </td>
+                    <td class="actions">
+                        <a class="btn small primary" href="{{ url_for('movimentar', produto_id=i['id']) }}">{{ tr('move') }}</a>
+                        {% if session.get('is_admin') %}
+                        <a class="btn small light" href="{{ url_for('editar_produto', produto_id=i['id']) }}">{{ tr('edit') }}</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8" class="empty">{{ tr('no_items_filters') }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

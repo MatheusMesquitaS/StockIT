@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="topbar">
+    <div>
+        <h1>{{ tr('create_user') }}</h1>
+        <p>{{ tr('create_user_subtitle') }}</p>
+    </div>
+    <a href="{{ url_for('listar_usuarios') }}" class="btn light">{{ tr('back') }}</a>
+</div>
+
+<div class="panel">
+    <div class="panel-body">
+        <form method="POST" class="form-panel">
+            <div class="form-grid">
+                <div>
+                    <label>{{ tr('full_name') }}</label>
+                    <input name="nome" placeholder="{{ tr('full_name') }}" required>
+                </div>
+                <div>
+                    <label>{{ tr('username') }}</label>
+                    <input name="usuario" placeholder="{{ tr('username') }}" required>
+                </div>
+                <div>
+                    <label>{{ tr('password') }}</label>
+                    <input name="senha" type="password" placeholder="{{ tr('password') }}" required>
+                    <div class="password-rules">
+                        <strong>{{ tr('password_rules') }}:</strong>
+                        <ul>
+                            <li>{{ tr('password_min_8') }}</li>
+                            <li>{{ tr('password_number') }}</li>
+                            <li>{{ tr('password_special') }}</li>
+                        </ul>
+                    </div>
+                </div>
+                <div>
+                    <label>{{ tr('confirm_password') }}</label>
+                    <input name="confirmar_senha" type="password" placeholder="{{ tr('confirm_password') }}" required>
+                </div>
+                <div>
+                    <label>{{ tr('plant') }}</label>
+                    <select name="planta">
+                        <option value="">{{ tr('select_plant') }}</option>
+                        {% for c, n in PLANTAS %}
+                        <option value="{{ c }}">{{ c }} - {{ n }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="user-permission-box">
+                    <label class="check-line"><input type="checkbox" name="is_admin"> {{ tr('allow_admin') }}</label>
+                    <small>{{ tr('admin_all_plants') }}</small>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button class="btn primary">{{ tr('create_user') }}</button>
+                <a class="btn light" href="{{ url_for('listar_usuarios') }}">{{ tr('cancel') }}</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="topbar">
+    <div>
+        <h1>{{ tr('profile_title') }}</h1>
+        <p>{{ tr('profile_subtitle') }}</p>
+    </div>
+</div>
+
+<div class="profile-grid">
+    <section class="panel profile-identity-card">
+        <div class="panel-body">
+            <div class="profile-avatar" aria-hidden="true">{{ usuario['nome'][0]|upper if usuario['nome'] else 'U' }}</div>
+            <div class="profile-identity-text">
+                <h2>{{ usuario['nome'] }}</h2>
+                <p>@{{ usuario['usuario'] }}</p>
+                {% if usuario['is_admin'] %}<span class="badge green">{{ tr('administrator') }}</span>
+                {% else %}<span class="badge yellow">{{ tr('standard_user') }}</span>{% endif %}
+                {% if usuario['ativo'] %}<span class="badge green">{{ tr('active') }}</span>
+                {% else %}<span class="badge red">{{ tr('inactive') }}</span>{% endif %}
+            </div>
+        </div>
+    </section>
+
+    <section class="panel profile-info-card">
+        <div class="panel-header"><strong>{{ tr('account_information') }}</strong></div>
+        <div class="panel-body profile-info-list">
+            <div class="profile-info-row"><span>{{ tr('name') }}</span><strong>{{ usuario['nome'] }}</strong></div>
+            <div class="profile-info-row"><span>{{ tr('user') }}</span><strong>{{ usuario['usuario'] }}</strong></div>
+            <div class="profile-info-row"><span>{{ tr('profile') }}</span><strong>{{ tr('administrator') if usuario['is_admin'] else tr('standard_user') }}</strong></div>
+            <div class="profile-info-row"><span>{{ tr('main_plant') }}</span><strong>{{ usuario['planta'] }}</strong></div>
+            <div class="profile-info-row"><span>{{ tr('account_created') }}</span><strong>{{ usuario['criado_em'] }}</strong></div>
+        </div>
+    </section>
+</div>
+
+<div class="profile-stats-grid">
+    <article class="profile-stat-card"><span>{{ tr('movements') }}</span><strong>{{ estatisticas['total'] }}</strong></article>
+    <article class="profile-stat-card profile-stat-entry"><span>{{ tr('entries') }}</span><strong>{{ estatisticas['entradas'] }}</strong></article>
+    <article class="profile-stat-card profile-stat-exit"><span>{{ tr('withdrawals') }}</span><strong>{{ estatisticas['retiradas'] }}</strong></article>
+</div>
+
+<form method="POST" class="profile-preferences-grid">
+    <section class="panel">
+        <div class="panel-header">
+            <strong>{{ tr('appearance') }}</strong>
+            <small>{{ tr('appearance_help') }}</small>
+        </div>
+        <div class="panel-body preference-options">
+            {% for valor, titulo, ajuda in [('light','light','light_help'),('dark','dark','dark_help'),('system','follow_device','follow_device_help')] %}
+            <label class="preference-option">
+                <input type="radio" name="tema" value="{{ valor }}" {% if preferencias['tema'] == valor %}checked{% endif %}>
+                <span class="theme-preview theme-preview-{{ valor }}"></span>
+                <span><strong>{{ tr(titulo) }}</strong><small>{{ tr(ajuda) }}</small></span>
+            </label>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="panel profile-language-about-card">
+        <div class="panel-header">
+            <strong>{{ tr('language') }}</strong>
+            <small>{{ tr('language_help') }}</small>
+        </div>
+        <div class="panel-body profile-language-about-body">
+            <div class="profile-language-control">
+                <label for="idioma">{{ tr('language') }}</label>
+                <select name="idioma" id="idioma">
+                    {% for idioma in idiomas_disponiveis %}
+                    <option value="{{ idioma['codigo'] }}" {% if preferencias['idioma'] == idioma['codigo'] %}selected{% endif %}>{{ idioma['nome'] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="profile-about-divider"></div>
+
+            <div class="profile-about-section">
+                <div class="profile-about-heading">
+                    <div class="profile-about-icon" aria-hidden="true">i</div>
+                    <div>
+                        <strong>{{ tr('about_system') }}</strong>
+                        <small>{{ tr('about_system_help') }}</small>
+                    </div>
+                </div>
+                <div class="profile-about-list">
+                    <div class="profile-about-row"><span>{{ tr('system') }}</span><strong>StockIT</strong></div>
+                    <div class="profile-about-row"><span>{{ tr('version') }}</span><strong class="system-version-badge">v1.5.0</strong></div>
+                    <div class="profile-about-row"><span>{{ tr('environment') }}</span><strong class="environment-badge">{{ tr('production') }}</strong></div>
+                    <div class="profile-about-row">
+                        <span>{{ tr('current_plant') }}</span>
+                        <strong>{{ planta_atual if session.get('is_admin') else usuario['planta'] }}</strong>
+                    </div>
+                    <div class="profile-about-row"><span>{{ tr('profile') }}</span><strong>{{ tr('administrator') if usuario['is_admin'] else tr('standard_user') }}</strong></div>
+                    <div class="profile-about-row"><span>{{ tr('developed_by') }}</span><strong>Matheus Mesquita</strong></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <strong>{{ tr('dashboard_customization') }}</strong>
+            <small>{{ tr('dashboard_help') }}</small>
+        </div>
+        <div class="panel-body dashboard-preference-list">
+            {% for nome, titulo, ajuda in [('mostrar_metricas','indicator_cards','indicator_cards_help'),('mostrar_estoque_tipo','stock_by_type','stock_by_type_help'),('mostrar_movimentacoes','latest_movements','latest_movements_help')] %}
+            <label class="dashboard-preference-item">
+                <input type="checkbox" name="{{ nome }}" {% if preferencias[nome] %}checked{% endif %}>
+                <span><strong>{{ tr(titulo) }}</strong><small>{{ tr(ajuda) }}</small></span>
+            </label>
+            {% endfor %}
+        </div>
+    </section>
+
+    <div class="profile-preferences-actions">
+        <button type="submit" class="btn primary">{{ tr('save_preferences') }}</button>
+        <a href="{{ url_for('dashboard') }}" class="btn light">{{ tr('cancel') }}</a>
+    </div>
+</form>
+
+<div class="profile-bottom-grid">
+    <section class="panel">
+        <div class="panel-header"><strong>{{ tr('latest_account_activity') }}</strong></div>
+        <div class="panel-body table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>{{ tr('date') }}</th><th>{{ tr('item') }}</th><th>{{ tr('type') }}</th>
+                        <th>{{ tr('quantity') }}</th><th>{{ tr('destination') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in atividades %}
+                    <tr>
+                        <td>{{ m['data_movimento'] }}</td>
+                        <td>{{ m['produto'] }}</td>
+                        <td>{% if m['tipo_movimento'] == 'Entrada' %}<span class="badge green">{{ tr('entry') }}</span>
+                            {% else %}<span class="badge red">{{ tr('withdrawal') }}</span>{% endif %}</td>
+                        <td>{{ m['quantidade'] }}</td>
+                        <td>{{ m['destino'] or '-' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="5" class="empty">{{ tr('no_account_movements') }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <aside class="panel profile-security-card">
+        <div class="panel-header"><strong>{{ tr('security') }}</strong></div>
+        <div class="panel-body">
+            <h3>{{ tr('access_password') }}</h3>
+            <p>{{ tr('password_security_help') }}</p>
+            <a href="{{ url_for('alterar_senha') }}" class="btn primary full">{{ tr('change_password') }}</a>
+        </div>
+    </aside>
+</div>
+{% endblock %}

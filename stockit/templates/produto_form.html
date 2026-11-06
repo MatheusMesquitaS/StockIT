@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% block content %}
+{% set editando = produto is defined and produto %}
+{% set e = especificacao if especificacao else {} %}
+
+<div class="topbar">
+    <div>
+        <h1>{{ tr('edit_item') if editando else tr('new_item') }}</h1>
+        <p>{{ tr('edit_product_subtitle') if editando else tr('new_product_subtitle') }}</p>
+    </div>
+    <a href="{{ url_for('produtos') }}" class="btn light">{{ tr('back') }}</a>
+</div>
+
+<div class="panel">
+    <div class="panel-body">
+        <form method="POST" class="form-panel" autocomplete="off">
+
+            <div class="product-tabs" role="tablist">
+                <button type="button" class="product-tab active" data-tab="geral" role="tab">{{ tr('general_data') }}</button>
+                <button type="button" class="product-tab" data-tab="config" id="configTabButton" role="tab">{{ tr('configuration') }}</button>
+            </div>
+
+            <!-- ===================== ABA: DADOS GERAIS ===================== -->
+            <div class="product-tab-panel active" data-panel="geral">
+                <div class="form-grid">
+                    <div>
+                        <label>{{ tr('item_name') }}</label>
+                        <input name="nome" value="{{ produto['nome'] if editando else '' }}" placeholder="{{ tr('item_name') }}" required>
+                    </div>
+
+                    <div>
+                        <label>{{ tr('type') }}</label>
+                        <select name="tipo" id="tipoItem" required>
+                            <option value="">{{ tr('select') }}</option>
+                            {% for t in tipos %}
+                            <option value="{{ t }}" {% if editando and produto['tipo'] == t %}selected{% endif %}>{{ t }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div id="toner-color-group" class="col-2">
+                        <label>{{ tr('toner_color') }}</label>
+                        <select name="cor_toner" id="cor_toner">
+                            <option value="">{{ tr('select') }}</option>
+                            {% for cor, icone in [('Black','⬛'),('Cyan','🟦'),('Magenta','🟥'),('Yellow','🟨')] %}
+                            <option value="{{ cor }}" {% if editando and produto['cor_toner'] == cor %}selected{% endif %}>{{ icone }} {{ cor }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label>Asset Number / {{ tr('asset') }}</label>
+                        <input name="patrimonio" value="{{ (produto['patrimonio'] or '') if editando else '' }}" placeholder="{{ tr('optional') }}">
+                    </div>
+
+                    <div>
+                        <label>{{ tr('serial') }}</label>
+                        <input name="serial" value="{{ (produto['serial'] or '') if editando else '' }}" placeholder="{{ tr('optional') }}">
+                    </div>
+
+                    <div>
+                        <label>{{ tr('plant') }}</label>
+                        {% if session.get('is_admin') %}
+                        <select name="planta" required>
+                            <option value="">{{ tr('select_plant') }}</option>
+                            {% for c, n in PLANTAS %}
+                            <option value="{{ c }}" {% if editando and produto['planta'] == c %}selected{% endif %}>{{ c }} - {{ n }}</option>
+                            {% endfor %}
+                        </select>
+                        {% else %}
+                        <input value="{{ session.get('planta') }}" disabled>
+                        <input type="hidden" name="planta" value="{{ session.get('planta') }}">
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label>{{ tr('current_quantity') if editando else tr('initial_quantity') }}</label>
+                        <input name="quantidade" type="number" min="0" value="{{ produto['quantidade'] if editando else 0 }}">
+                    </div>
+
+                    <div>
+                        <label>{{ tr('minimum_stock') }}</label>
+                        <input name="estoque_minimo" type="number" min="0" value="{{ produto['estoque_minimo'] if editando else 0 }}">
+                    </div>
+
+                    <div class="col-2">
+                        <label>{{ tr('observation') }}</label>
+                        <input name="observacao" value="{{ (produto['observacao'] or '') if editando else '' }}" placeholder="{{ tr('observation') }}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===================== ABA: CONFIGURACAO ===================== -->
+            <div class="product-tab-panel" data-panel="config">
+                <p class="spec-help">{{ tr('configuration_help') }}</p>
+                <div class="form-grid spec-fields">
+                    <div class="col-2">
+                        <label>{{ tr('processor') }}</label>
+                        <input name="processador" value="{{ e['processador'] or '' }}" placeholder="{{ tr('processor_placeholder') }}">
+                    </div>
+
+                    <div>
+                        <label>{{ tr('ram_amount') }}</label>
+                        <input name="ram_gb" type="number" min="0" max="1024" value="{{ e['ram_gb'] or '' }}" placeholder="16">
+                    </div>
+
+                    <div>
+                        <label>{{ tr('ram_channel') }}</label>
+                        <div class="segmented-choice">
+                            <label class="segmented-option">
+                                <input type="radio" name="ram_canal" value="single" {% if e['ram_canal'] == 'single' %}checked{% endif %}>
+                                <span>{{ tr('ram_single') }}</span>
+                            </label>
+                            <label class="segmented-option">
+                                <input type="radio" name="ram_canal" value="dual" {% if e['ram_canal'] == 'dual' %}checked{% endif %}>
+                                <span>{{ tr('ram_dual') }}</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label>{{ tr('storage_type') }}</label>
+                        <select name="armazenamento_tipo">
+                            <option value="">{{ tr('select') }}</option>
+                            {% for codigo in ['ssd_sata', 'ssd_nvme', 'hdd', 'hybrid'] %}
+                            <option value="{{ codigo }}" {% if e['armazenamento_tipo'] == codigo %}selected{% endif %}>{{ tr('storage_' ~ codigo) }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label>{{ tr('storage_capacity') }}</label>
+                        <input name="armazenamento_gb" type="number" min="0" max="100000" value="{{ e['armazenamento_gb'] or '' }}" placeholder="512">
+                    </div>
+
+                    <div class="battery-field">
+                        <label>{{ tr('battery_health') }}</label>
+                        <input name="bateria_saude" id="bateria_saude" type="number" min="0" max="100"
+                               value="{{ e['bateria_saude'] if e['bateria_saude'] is defined and e['bateria_saude'] is not none else '' }}"
+                               placeholder="85">
+                        <div class="battery-meter"><span id="batteryMeterFill"></span></div>
+                    </div>
+
+                    <div class="battery-field">
+                        <label>{{ tr('battery_status') }}</label>
+                        <select name="bateria_status">
+                            <option value="">{{ tr('select') }}</option>
+                            {% for codigo in ['excellent', 'good', 'fair', 'poor'] %}
+                            <option value="{{ codigo }}" {% if e['bateria_status'] == codigo %}selected{% endif %}>{{ tr('battery_' ~ codigo) }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn primary" type="submit">{{ tr('save_changes') if editando else tr('save_item') }}</button>
+                <a class="btn light" href="{{ url_for('produtos') }}">{{ tr('cancel') }}</a>
+            </div>
+        </form>
+
+        {% if editando and session.get('is_admin') %}
+        <div class="danger-zone">
+            <div>
+                <strong>{{ tr('delete_item') }}</strong>
+                <p>{{ tr('delete_item_help') }}</p>
+            </div>
+            <form method="POST" action="{{ url_for('excluir_produto', produto_id=produto['id']) }}"
+                  data-confirm="{{ tr('confirm_delete_item') }}"
+                  onsubmit="return confirm(this.dataset.confirm);">
+                <button class="btn danger" type="submit">{{ tr('delete_item') }}</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const TIPOS_CONFIG = ['Notebook', 'Desktop'];
+    const tipo = document.getElementById('tipoItem');
+    const tabs = document.querySelectorAll('.product-tab');
+    const panels = document.querySelectorAll('.product-tab-panel');
+    const configTab = document.getElementById('configTabButton');
+    const configPanel = document.querySelector('[data-panel="config"]');
+    const batteryFields = document.querySelectorAll('.battery-field');
+    const tonerGroup = document.getElementById('toner-color-group');
+    const corToner = document.getElementById('cor_toner');
+    const bateria = document.getElementById('bateria_saude');
+    const meterFill = document.getElementById('batteryMeterFill');
+
+    function abrirAba(nome) {
+        tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === nome));
+        panels.forEach(p => p.classList.toggle('active', p.dataset.panel === nome));
+    }
+
+    // Campos desabilitados nao sao validados nem enviados pelo navegador
+    function habilitar(container, ativo) {
+        container.querySelectorAll('input, select').forEach(campo => { campo.disabled = !ativo; });
+    }
+
+    function atualizarTipo() {
+        const valor = tipo.value;
+        const temConfig = TIPOS_CONFIG.includes(valor);
+        const ehNotebook = valor === 'Notebook';
+
+        configTab.style.display = temConfig ? '' : 'none';
+        habilitar(configPanel, temConfig);
+        if (!temConfig && configTab.classList.contains('active')) abrirAba('geral');
+
+        batteryFields.forEach(campo => {
+            campo.style.display = ehNotebook ? '' : 'none';
+            habilitar(campo, temConfig && ehNotebook);
+        });
+
+        const ehToner = valor === 'Toner';
+        tonerGroup.style.display = ehToner ? 'block' : 'none';
+        corToner.required = ehToner;
+        if (!ehToner) corToner.value = '';
+    }
+
+    function atualizarBateria() {
+        const v = parseInt(bateria.value, 10);
+        if (isNaN(v)) { meterFill.style.width = '0%'; meterFill.className = ''; return; }
+        const pct = Math.max(0, Math.min(100, v));
+        meterFill.style.width = pct + '%';
+        // Faixas apenas visuais da barra
+        meterFill.className = pct >= 80 ? 'excellent' : pct >= 60 ? 'good' : pct >= 40 ? 'fair' : 'poor';
+    }
+
+    tabs.forEach(t => t.addEventListener('click', () => abrirAba(t.dataset.tab)));
+    tipo.addEventListener('change', atualizarTipo);
+    bateria.addEventListener('input', atualizarBateria);
+    atualizarTipo();
+    atualizarBateria();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="topbar">
+    <div>
+        <h1>{{ tr('dashboard') }}</h1>
+        <p>{{ tr('dashboard_subtitle') }}</p>
+    </div>
+    <a href="{{ url_for('novo_produto') }}" class="btn primary">{{ tr('new_item') }}</a>
+</div>
+
+{% if dashboard_prefs['mostrar_metricas'] %}
+<div class="cards">
+    <div class="metric blue"><span>{{ tr('items_registered') }}</span><strong>{{ total_itens }}</strong></div>
+    <div class="metric green"><span>{{ tr('total_quantity') }}</span><strong>{{ total_estoque }}</strong></div>
+    <div class="metric yellow"><span>{{ tr('low_stock') }}</span><strong>{{ baixo_estoque }}</strong></div>
+    <div class="metric red"><span>{{ tr('out_of_stock') }}</span><strong>{{ sem_estoque }}</strong></div>
+</div>
+{% endif %}
+
+{% if dashboard_prefs['mostrar_estoque_tipo'] %}
+<div class="panel type-summary-panel">
+    <div class="panel-header">
+        <strong>{{ tr('stock_by_type') }}</strong>
+        <small>{{ tr('available_quantity_category') }}</small>
+    </div>
+    <div class="panel-body">
+        <div class="type-summary-grid">
+            {% for item in estoque_por_tipo %}
+            <div class="type-summary-card">
+                <span class="type-summary-name">{{ item['tipo'] }}</span>
+                <strong>{{ item['quantidade_total'] }}</strong>
+                <small>{{ item['itens_cadastrados'] }} {{ tr('registrations') }}</small>
+            </div>
+            {% else %}
+            <div class="empty">{{ tr('no_item_type') }}</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if dashboard_prefs['mostrar_movimentacoes'] %}
+<div class="panel">
+    <div class="panel-header"><strong>{{ tr('latest_movements') }}</strong></div>
+    <div class="panel-body table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>{{ tr('date') }}</th>
+                    <th>{{ tr('item') }}</th>
+                    <th>{{ tr('user') }}</th>
+                    <th>{{ tr('type') }}</th>
+                    <th>{{ tr('quantity') }}</th>
+                    <th>{{ tr('destination') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in movimentos %}
+                <tr>
+                    <td>{{ m['data_movimento'] }}</td>
+                    <td>{{ m['produto'] }}<small>{{ m['planta'] }}</small></td>
+                    <td>{{ m['usuario_nome'] }}</td>
+                    <td>
+                        {% if m['tipo_movimento'] == 'Entrada' %}
+                        <span class="badge green">{{ tr('entry') }}</span>
+                        {% else %}
+                        <span class="badge red">{{ tr('withdrawal') }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ m['quantidade'] }}</td>
+                    <td>{{ m['destino'] or '-' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="empty">{{ tr('no_recent_movements') }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if not dashboard_prefs['mostrar_metricas'] and not dashboard_prefs['mostrar_estoque_tipo'] and not dashboard_prefs['mostrar_movimentacoes'] %}
+<div class="panel empty-dashboard-state">
+    <div class="panel-body">
+        <h2>{{ tr('profile_empty_dashboard') }}</h2>
+        <p>{{ tr('profile_empty_dashboard_help') }}</p>
+        <a href="{{ url_for('meu_perfil') }}" class="btn primary">{{ tr('customize_dashboard') }}</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

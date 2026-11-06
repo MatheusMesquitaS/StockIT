@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="topbar">
+    <div>
+        <h1>{{ tr('movement_title') }}</h1>
+        <p>{{ tr('movement_subtitle') }}</p>
+    </div>
+    <a href="{{ url_for('produtos') }}" class="btn light">{{ tr('back') }}</a>
+</div>
+
+<div class="product-summary">
+    <h2>{{ produto['nome'] }}</h2>
+    <p>{{ produto['tipo'] }} • {{ produto['planta'] }} • {{ tr('current_quantity') }}: {{ produto['quantidade'] }}</p>
+</div>
+
+<div class="panel">
+    <div class="panel-body">
+        <form method="POST" class="form-panel">
+            <div class="form-grid">
+                <div>
+                    <label>{{ tr('movement_type') }}</label>
+                    <select name="tipo_movimento">
+                        <option value="Entrada">{{ tr('entry') }}</option>
+                        <option value="Retirada">{{ tr('withdrawal') }}</option>
+                    </select>
+                </div>
+                <div>
+                    <label>{{ tr('quantity') }}</label>
+                    <input name="quantidade" type="number" min="1" required>
+                </div>
+                <div>
+                    <label>{{ tr('destination_user') }}</label>
+                    <input name="destino" placeholder="{{ tr('user_location') }}">
+                </div>
+                <div>
+                    <label>{{ tr('observation') }}</label>
+                    <input name="observacao" placeholder="{{ tr('observation') }}">
+                </div>
+            </div>
+            <div class="form-actions">
+                <button class="btn primary">{{ tr('register') }}</button>
+                <a class="btn light" href="{{ url_for('produtos') }}">{{ tr('cancel') }}</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

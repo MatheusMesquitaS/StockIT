@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="{{ idioma_atual }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>StockIT</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/logo-mark.svg') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/estilo.css') }}">
+</head>
+<body data-theme-preference="{{ session.get('tema', 'light') }}">
+    <div class="app-shell">
+        <aside class="sidebar collapsed" id="sidebar">
+            <div class="brand">
+                <div class="brand-icon" id="sidebarToggle" role="button" tabindex="0" aria-label="Menu">
+                    <img id="logoApp"
+                         src="{{ url_for('static', filename='img/logo-mark.svg') }}"
+                         data-logo-full="{{ url_for('static', filename='img/logo-full.svg') }}"
+                         data-logo-small="{{ url_for('static', filename='img/logo-mark.svg') }}"
+                         class="logo-app" alt="StockIT">
+                </div>
+            </div>
+
+            <nav class="menu">
+                <a class="menu-link" href="{{ url_for('dashboard') }}">
+                    <img src="{{ url_for('static', filename='img/icons/svg/dashboard.svg') }}" class="menu-icon" alt="">
+                    <span>{{ tr('dashboard') }}</span>
+                </a>
+                <a class="menu-link" href="{{ url_for('produtos') }}">
+                    <img src="{{ url_for('static', filename='img/icons/svg/estoque.svg') }}" class="menu-icon" alt="">
+                    <span>{{ tr('inventory') }}</span>
+                </a>
+                <a class="menu-link" href="{{ url_for('novo_produto') }}">
+                    <img src="{{ url_for('static', filename='img/icons/svg/novo_item.svg') }}" class="menu-icon" alt="">
+                    <span>{{ tr('new_item') }}</span>
+                </a>
+                <a class="menu-link" href="{{ url_for('movimentacoes') }}">
+                    <img src="{{ url_for('static', filename='img/icons/svg/movimentacoes.svg') }}" class="menu-icon" alt="">
+                    <span>{{ tr('movements') }}</span>
+                </a>
+                {% if session.get('is_admin') %}
+                <a class="menu-link" href="{{ url_for('listar_usuarios') }}">
+                    <img src="{{ url_for('static', filename='img/icons/svg/usuarios.svg') }}" class="menu-icon" alt="">
+                    <span>{{ tr('users') }}</span>
+                </a>
+                {% endif %}
+                <a class="menu-link" href="{{ url_for('meu_perfil') }}">
+                    <img src="{{ url_for('static', filename='img/icons/svg/meu_perfil.svg') }}" class="menu-icon" alt="">
+                    <span>{{ tr('my_profile') }}</span>
+                </a>
+                <a class="menu-link danger" href="{{ url_for('logout') }}" id="exit-icon">
+                    <img src="{{ url_for('static', filename='img/icons/svg/sair.svg') }}" class="menu-icon" alt="">
+                    <span>{{ tr('logout') }}</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="content">
+            <div id="plantSelectorGlobal" class="topbar-plant-selector">
+                <span class="plant-selector-label">{{ tr('plant') }}</span>
+                {% if session.get('is_admin') %}
+                <form method="POST" action="{{ url_for('mudar_planta') }}">
+                    <select name="planta_atual" onchange="this.form.submit()">
+                        <option value="TODAS" {% if planta_atual == 'TODAS' %}selected{% endif %}>{{ tr('all_plants') }}</option>
+                        {% for c, n in PLANTAS %}
+                        <option value="{{ c }}" {% if planta_atual == c %}selected{% endif %}>{{ c }} - {{ n }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+                {% else %}
+                <select disabled><option>{{ session.get('planta') }}</option></select>
+                {% endif %}
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for cat, msg in messages %}
+                <div class="alert {{ cat }}">{{ msg }}</div>
+                {% endfor %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const logoApp = document.getElementById('logoApp');
+
+        function atualizarLogo() {
+            if (!logoApp) return;
+            const nova = sidebar.classList.contains('collapsed') ? logoApp.dataset.logoSmall : logoApp.dataset.logoFull;
+            if (logoApp.getAttribute('src') === nova) return;
+            logoApp.classList.add('logo-fading');
+            setTimeout(() => { logoApp.src = nova; logoApp.classList.remove('logo-fading'); }, 220);
+        }
+
+        function setCollapsed(v) {
+            sidebar.classList.toggle('collapsed', v);
+            document.body.classList.toggle('sidebar-collapsed', v);
+            localStorage.setItem('sidebarState', v ? 'collapsed' : 'expanded');
+            atualizarLogo();
+        }
+
+        setCollapsed(localStorage.getItem('sidebarState') !== 'expanded');
+        sidebarToggle.addEventListener('click', e => { e.stopPropagation(); setCollapsed(!sidebar.classList.contains('collapsed')); });
+        sidebar.addEventListener('click', e => e.stopPropagation());
+        document.addEventListener('click', e => {
+            if (!sidebar.contains(e.target) && !sidebar.classList.contains('collapsed')) setCollapsed(true);
+        });
+
+        // Seletor de unidade ao lado do titulo da pagina
+        const ps = document.getElementById('plantSelectorGlobal');
+        const tb = document.querySelector('.content .topbar');
+        if (ps && tb) { tb.appendChild(ps); tb.classList.add('topbar-with-plant-selector'); }
+
+        // Recolhe a sidebar com animacao antes de navegar
+        document.querySelectorAll('.menu-link').forEach(l => l.addEventListener('click', e => {
+            e.preventDefault();
+            const destino = l.href;
+            setCollapsed(true);
+            setTimeout(() => location.href = destino, 300);
+        }));
+
+        // Tema: claro, escuro ou seguir o dispositivo
+        const pref = document.body.dataset.themePreference || 'light';
+        const media = matchMedia('(prefers-color-scheme: dark)');
+        function aplicarTema() {
+            document.body.classList.toggle('theme-dark', pref === 'dark' || (pref === 'system' && media.matches));
+        }
+        aplicarTema();
+        if (pref === 'system') media.addEventListener('change', aplicarTema);
+    </script>
+</body>
+</html>

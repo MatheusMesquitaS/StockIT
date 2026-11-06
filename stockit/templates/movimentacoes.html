@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="topbar">
+    <div>
+        <h1>{{ tr('movements') }}</h1>
+        <p>{{ tr('full_movement_history') }}</p>
+    </div>
+    <a href="{{ url_for('produtos') }}" class="btn primary">{{ tr('move_item') }}</a>
+</div>
+
+<div class="panel filter-panel">
+    <form class="filter-form movements-filter" method="GET">
+        <input name="busca" value="{{ busca }}" placeholder="{{ tr('search_movement_placeholder') }}">
+        <select name="tipo">
+            <option value="">{{ tr('all_movement_types') }}</option>
+            <option value="Entrada" {% if tipo == 'Entrada' %}selected{% endif %}>{{ tr('entry') }}</option>
+            <option value="Retirada" {% if tipo == 'Retirada' %}selected{% endif %}>{{ tr('withdrawal') }}</option>
+        </select>
+        {% if session.get('is_admin') and planta_atual == 'TODAS' %}
+        <select name="planta">
+            <option value="">{{ tr('all_plants_filter') }}</option>
+            {% for c, n in PLANTAS %}
+            <option value="{{ c }}" {% if planta_filtro == c %}selected{% endif %}>{{ c }} - {{ n }}</option>
+            {% endfor %}
+        </select>
+        {% endif %}
+        <button class="btn primary">{{ tr('filter') }}</button>
+        <a class="btn light" href="{{ url_for('movimentacoes') }}">{{ tr('clear') }}</a>
+    </form>
+</div>
+
+<div class="panel">
+    <div class="panel-body table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>{{ tr('date_time') }}</th>
+                    <th>{{ tr('user') }}</th>
+                    <th>{{ tr('type') }}</th>
+                    <th>{{ tr('item') }}</th>
+                    <th>{{ tr('asset') }}</th>
+                    <th>{{ tr('serial') }}</th>
+                    <th>{{ tr('plant') }}</th>
+                    <th>{{ tr('quantity') }}</th>
+                    <th>{{ tr('destination') }}</th>
+                    <th>{{ tr('observation') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in movimentos %}
+                <tr>
+                    <td>{{ m['data_movimento'] }}</td>
+                    <td>{{ m['usuario_nome'] }}<small>{{ m['usuario_login'] }}</small></td>
+                    <td>
+                        {% if m['tipo_movimento'] == 'Entrada' %}
+                        <span class="badge green">{{ tr('entry') }}</span>
+                        {% else %}
+                        <span class="badge red">{{ tr('withdrawal') }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ m['produto'] }}<small>{{ m['produto_tipo'] }}</small></td>
+                    <td>{{ m['patrimonio'] or '-' }}</td>
+                    <td>{{ m['serial'] or '-' }}</td>
+                    <td>{{ m['planta'] }}</td>
+                    <td>{{ m['quantidade'] }}</td>
+                    <td>{{ m['destino'] or '-' }}</td>
+                    <td>{{ m['observacao'] or '-' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="10" class="empty">{{ tr('no_movements') }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

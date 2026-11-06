@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="topbar">
+    <div>
+        <h1>{{ tr('users') }}</h1>
+        <p>{{ tr('users_subtitle') }}</p>
+    </div>
+    <a href="{{ url_for('criar_usuario') }}" class="btn primary">{{ tr('new_user') }}</a>
+</div>
+
+<div class="panel">
+    <div class="panel-body table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>{{ tr('name') }}</th>
+                    <th>{{ tr('user') }}</th>
+                    <th>{{ tr('plant') }}</th>
+                    <th>{{ tr('profile') }}</th>
+                    <th>{{ tr('status') }}</th>
+                    <th>{{ tr('created_at') }}</th>
+                    <th>{{ tr('actions') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in usuarios %}
+                <tr>
+                    <td>{{ u['nome'] }}</td>
+                    <td>{{ u['usuario'] }}</td>
+                    <td>{{ u['planta'] }}</td>
+                    <td>
+                        {% if u['is_admin'] %}<span class="badge green">Admin</span>
+                        {% else %}<span class="badge yellow">{{ tr('default_profile') }}</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if u['ativo'] %}<span class="badge green">{{ tr('active') }}</span>
+                        {% else %}<span class="badge red">{{ tr('inactive') }}</span>{% endif %}
+                    </td>
+                    <td>{{ u['criado_em'] }}</td>
+                    <td class="actions">
+                        <form method="POST" action="{{ url_for('alternar_admin', user_id=u['id']) }}">
+                            <button class="btn small light">Admin</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('alternar_status', user_id=u['id']) }}">
+                            <button class="btn small danger">{{ tr('status') }}</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('resetar_senha', user_id=u['id']) }}"
+                              data-confirm="{{ tr('reset_password_confirm') }}"
+                              onsubmit="return confirm(this.dataset.confirm);">
+                            <button class="btn small primary">{{ tr('password') }}</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="empty">{{ tr('no_users') }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
